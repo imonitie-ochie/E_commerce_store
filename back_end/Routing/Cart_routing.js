@@ -1,19 +1,11 @@
-// Add to cart
-const addToCart = (req, res) => {
-  // your logic
-  res.send("Item added to cart");
-};
+// routes/cartRoutes.js
+const express = require("express");
+const { addToCart, removeFromCart, viewCart } = require("../controllers/cartController");
 
-// Remove from cart
-const removeFromCart = (req, res) => {
-  // your logic
-  res.send("Item removed from cart");
-};
+const router = express.Router();
 
-// View cart
-const viewCart = (req, res) => {
-  // your logic
-  res.send("Here is your cart");
-};
+router.post("/add", addToCart);
+router.post("/remove", removeFromCart);
+router.get("/view", viewCart);
 
-module.exports = { addToCart, removeFromCart, viewCart };
+module.exports = router;

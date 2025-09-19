@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose")
 const connectDB = require("./db_connection/mogo_db")
 const UserRoute = require("./Routing/User_routing")
+const cors = require("cors");
 
 
 // Load environment variables
@@ -15,7 +16,13 @@ const APP_NAME = process.env.APP_NAME || "ExpressApp";
 // Middleware
 app.use(express.json());
 connectDB()
-
+app.use(cors(
+  {
+    origin: 'https://ecommerce-zv1v.onrender.com/', 
+  methods: ['GET', 'POST', 'DELETE'], 
+  allowedHeaders: ['Content-Type'],
+  }
+))
 // Routes
 app.get("/", (req, res) => {
   res.send(`Welcome to ${APP_NAME}!`);
