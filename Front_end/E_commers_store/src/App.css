@@ -1,0 +1,694 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root{
+  --bg: #f6f7fb;
+  --card-bg: #ffffff;
+  --muted: #6b7280;
+  --accent: #0ea5a4; /* teal-ish accent */
+  --shadow: 0 8px 24px rgba(15,23,42,0.08);
+  --radius: 12px;
+  --gap: 1.25rem;
+  --max-width: 1200px;
+
+  /* additional variants for hero/button */
+  --accent-dark: #07867f;
+  --text-color: #111827;
+}
+
+/* ---------------------------
+   Base / global
+   --------------------------- */
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+  margin: 0;
+  padding: 0;
+  /* display: flex;
+  justify-content: center; */
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* ========================
+   Global page / containers
+   ======================== */
+.productcard,
+.LoginPage {
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, var(--bg), #ffffff 60%);
+}
+
+/* ------------------------
+   Product card grid
+   ------------------------ */
+.productcard {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.product_card {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: min(100%, var(--max-width));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+
+/* Individual product card */
+.productCard {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0.9rem;
+  transition: transform .18s ease, box-shadow .18s ease;
+  cursor: pointer;
+  min-height: 320px;
+}
+
+/* Hover / focus for product card */
+.productCard:hover,
+.productCard:focus-within {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(15,23,42,0.12);
+  outline: none;
+}
+
+/* Product image area */
+.product_image{
+  width: 100%;
+  padding-top: 75%; /* 4:3 aspect ratio */
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #eef2f7, #ffffff);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02);
+}
+
+.product_image img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center;
+  transition: transform .4s ease;
+}
+
+.productCard:hover .product_image img{
+  transform: scale(1.04);
+}
+
+/* Product title */
+.product_name{
+  margin-top: 0.75rem;
+  display: block;
+  text-align: center;
+}
+
+.product_name h1{
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Product price area (last div in markup) */
+.productCard > div:last-of-type{
+  margin-top: auto; /* pushes price to the bottom if content short */
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(15,23,42,0.04);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #061226;
+}
+
+.productCard > div:last-of-type span{
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Utility keyboard focus */
+.productCard[tabindex] { outline: none; }
+.productCard[tabindex]:focus { box-shadow: 0 18px 40px rgba(15,23,42,0.14); transform: translateY(-6px); }
+
+/* ============================
+   Login page + hero (left/right)
+   ============================ */
+
+/* Layout: fixed-width left auth panel, hero on the right */
+.LoginPage{
+  min-height: 100vh;
+  padding: 2rem;
+  /* left panel fixed, image fills the rest */
+  gap: 2rem;
+  padding-left:50%;
+  padding-top:12.5% ;
+  align-items: center;
+  justify-items: stretch;
+}
+
+/* Auth panel style */
+.auth_panel{
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Title, error */
+.Login_title{
+  font-size: 1.6rem;
+  margin: 0;
+  color: #061226;
+  letter-spacing: -0.2px;
+  padding :1rem;
+}
+
+.Login_error{
+  background: rgba(254, 226, 226, 0.9);
+  color: #991b1b;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Form spacing utility */
+.space-y-4 { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* Labels */
+.Email,
+.Password {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* Inputs */
+.inpute_Box{
+  width: 75%;
+  padding: 1rem ;
+  border-radius: 10px;
+  border: 1px solid rgba(6,18,38,0.06);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+  transition: box-shadow .14s ease, border-color .14s ease, transform .12s ease;
+}
+
+.inpute_Box:focus{
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px rgba(14,165,164,0.08);
+  transform: translateY(-1px);
+}
+
+/* Button */
+.button{
+  width: 75%;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(180deg,var(--accent), var(--accent-dark));
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(14,165,164,0.12);
+  transition: transform .15s ease, box-shadow .15s ease, opacity .12s ease;
+}
+
+.button:hover{ transform: translateY(-3px); }
+.button:active{ transform: translateY(0); opacity: 0.98; }
+
+/* Register line */
+.Register_link{
+  margin: 0;
+  font-size: 0.9rem;
+  padding: 1rem;
+  color: var(--muted);
+  text-align: left;
+}
+
+.Register_link_1{
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* Hero image (right) with fading overlay into the left panel.
+   Replace the url(...) with your image or set it in React via inline style. */
+.hero_image{
+  height: 70vh;
+  border-radius: calc(var(--radius) + 8px);
+  box-shadow: var(--shadow);
+  background-image:
+    linear-gradient(
+      to left,
+      rgba(255,255,255,0.0) 40%,
+      rgba(255,255,255,0.65) 60%,
+      rgba(255,255,255,0.95) 78%
+    ),
+    url('/path/to/your-image.jpg'); /* <-- replace or set inline from React */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 420px;
+  overflow: hidden;
+  position: relative;
+  transition: transform .4s ease, box-shadow .3s ease;
+}
+
+.hero_image:hover{ transform: scale(1.02); box-shadow: 0 22px 48px rgba(15,23,42,0.12); }
+
+.hero_image .hero_caption{
+  position: absolute;
+  left: 3rem;
+  bottom: 2.2rem;
+  color: rgba(6,18,38,0.9);
+  font-weight: 600;
+  background: rgba(255,255,255,0.6);
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+  display: none;
+}
+
+/* Main container */
+.cover {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 800px;
+  width: 100%;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  gap: 40px;
+}
+
+/* Form section (left) */
+.contact_form {
+  flex: 1;
+  max-width: 400px;
+}
+
+.contact_form form {
+  display: flex;
+  flex-direction: column;
+}
+
+.Contact_us_flex {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.Contact_us_flex div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contact-specific styles */
+.contact_label {
+  font-size: 14px;
+  color: #333333;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.contact_input,
+.contact_textarea {
+  background-color: #f0f8ff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact_input::placeholder,
+.contact_textarea::placeholder {
+  color: #aaaaaa;
+}
+
+.contact_input:focus,
+.contact_textarea:focus {
+  box-shadow: 0 0 0 2px rgba(32, 178, 170, 0.3);
+}
+
+/* Message textarea */
+.contact_textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Submit button */
+.contact_button {
+  background-color: #20b2aa;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact_button:hover {
+  background-color: #189f93;
+}
+
+/* Write-up section (right) */
+.contact_write_up {
+  flex: 1;
+  max-width: 400px;
+  text-align: left;
+}
+
+.contact_write_up h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #333333;
+}
+
+.contact_write_up p {
+  font-size: 14px;
+  color: #666666;
+  margin-bottom: 15px;
+}
+
+.contact_write_up ul {
+  list-style: none;
+  padding: 0;
+  font-size: 14px;
+  color: #666666;
+  margin-bottom: 15px;
+}
+
+.contact_write_up ul li {
+  margin-bottom: 10px;
+}
+
+/* Link style similar to "Register" */
+.contact_write_up a {
+  color: #00b3a6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.contact_write_up a:hover {
+  text-decoration: underline;
+}
+
+/*Hero - legacy name from your file (kept for compatibility)*/
+.Hero_main{
+  height: 100%;
+  width: 100%;
+  color: black;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+
+/* ------------------------
+   NEW: hero component styles
+   (keeps both .hero and .Hero_main compatibility)
+   ------------------------ */
+.hero {
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  color: var(--text-color);
+  width: 100%;
+  background: antiquewhite;
+  box-sizing: border-box;
+}
+
+.hero__container {
+  width: 100%;
+  max-width: var(--max-width);
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
+/* Image column */
+.hero__image-wrap {
+  flex: 1 1 55%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.hero__image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border: 2px solid rgba(0,0,0,0.03);
+  border-radius: calc(var(--radius) - 4px);
+  max-height: 640px;
+}
+
+/* Content column */
+.hero__content {
+  flex: 1 1 45%;
+  padding: 8px 6px;
+}
+
+/* Kicker / Title / Lead */
+.hero__title {
+  font-size: clamp(28px, 4vw, 48px);
+  margin: 0 0 12px;
+  line-height: 1.05;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.hero__lead {
+  font-size: clamp(15px, 1.6vw, 18px);
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Button */
+.hero__button {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: linear-gradient(180deg,var(--accent), var(--accent-dark));
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Small screens: stack vertically */
+@media (max-width:900px){
+  .hero__container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero__image-wrap {
+    width: 100%;
+    order: 1;
+  }
+
+  .hero__image {
+    max-height: 420px;
+  }
+
+  .hero__content {
+    width: 100%;
+    order: 2;
+    padding-top: 18px;
+  }
+
+  .hero__title {
+    text-align: left;
+  }
+}
+
+/* Extra small screens: center text slightly and ensure spacing */
+@media (max-width: 480px) {
+  .hero {
+    padding: 28px 12px;
+  }
+
+  .hero__title {
+    font-size: 28px;
+  }
+
+  .hero__lead {
+    font-size: 15px;
+  }
+
+  .hero__button {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+}
+
+/* src/components/NavBar.css */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: black;
+  color: white;
+  width: 100%;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar__brand a {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.navbar__links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar__links li a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.navbar__links li a:hover {
+  color: #fbbf24; /* gold highlight */
+}
+
+/* Mobile menu */
+.navbar__toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .navbar__links {
+    position: absolute;
+    top: 64px;
+    right: 0;
+    flex-direction: column;
+    background: black;
+    width: 200px;
+    display: none;
+    padding: 1rem;
+  }
+
+  .navbar__links--open {
+    display: flex;
+  }
+
+  .navbar__toggle {
+    display: block;
+  }
+}
+
+/* Responsive rules */
+
+/* Product card small screens */
+@media (max-width: 520px){
+  :root { --gap: 1rem; }
+  .productCard { min-height: 280px; padding: 0.75rem; }
+  .product_name h1 { font-size: 0.95rem; }
+  .productCard > div:last-of-type { font-size: 1rem; padding-top: 0.6rem; }
+}
+
+/* Stack login layout on narrower screens */
+@media (max-width: 900px){
+  .LoginPage{
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+  .hero_image{
+    order: 2;
+    height: 280px;
+    min-height: 220px;
+    margin-top: 1rem;
+    border-radius: 12px;
+  }
+  .auth_panel{
+    max-width: 100%;
+    padding: 1.25rem;
+  }
+  .hero_image .hero_caption{ display: none; }
+}
+
+/* Responsive design for contact page on smaller screens */
+@media (max-width: 768px) {
+  .cover {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .contact_form,
+  .contact_write_up {
+    max-width: 100%;
+  }
+}
