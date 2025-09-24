@@ -13,7 +13,7 @@ function NavBar() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) return;
-      const api = "https://ecommerce-zv1v.onrender.com/"
+      const api = "https://ecommerce-zv1v.onrender.com"
 
       const res = await axios.get(`${api}/cart/view`, {
         headers: { Authorization: `Bearer ${token}` },
