@@ -15,7 +15,7 @@ export default function ProductCard({ product }) {
       return;
     }
 
-    api ="https://ecommerce-zv1v.onrender.com"
+    api ="https://ecommerce-zv1v.onrender.com/cart"
     // api ="http://localhost:3008/cart"
     setLoading(true);
     try {

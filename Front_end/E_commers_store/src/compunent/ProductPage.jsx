@@ -7,7 +7,7 @@ import axios from "axios";
 
 export default function SingleProductFullScreen() {
 
-  const api = "https://ecommerce-zv1v.onrender.com/cart"
+  const api = "https://e-commerce-store-576s.vercel.app/cart"
   const { products = [], loading, error } = useContext(ProductContext);
   const { id } = useParams();
   const navigate = useNavigate();
