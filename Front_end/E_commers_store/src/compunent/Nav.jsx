@@ -100,7 +100,7 @@ function NavBar() {
 
       {/* Mobile Links */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t shadow">
+        <div className="md:hidden bg-black border-t shadow">
           <div className="px-4 py-3 space-y-3">
             <Link
               to="/"

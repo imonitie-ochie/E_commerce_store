@@ -15,6 +15,8 @@ export default function CartPage() {
   const [paystack, setPaystack] = useState("");
   const navigate = useNavigate();
 
+ const api = "https://ecommerce-zv1v.onrender.com/cart";
+
   const fetchCart = async () => {
     setLoading(true);
     try {
@@ -26,7 +28,7 @@ export default function CartPage() {
         return console.warn("No token found.");
       }
 
-      api = "https://ecommerce-zv1v.onrender.com/cart"
+      
 
       const res = await axios.get(`${api}/view`, {
         headers: { Authorization: `Bearer ${token}` },
