@@ -15,7 +15,7 @@ export default function ProductCard({ product }) {
       return;
     }
 
-    api ="https://ecommerce-zv1v.onrender.com/cart"
+    const api = "https://e-commerce-store-576s.vercel.app/cart"
     // api ="http://localhost:3008/cart"
     setLoading(true);
     try {
@@ -29,7 +29,7 @@ export default function ProductCard({ product }) {
       window.setTimeout(() => setToastVisible(false), 2500);
     } catch (err) {
       console.error("Error adding to cart:", err);
-      
+
     } finally {
       setLoading(false);
     }
@@ -84,10 +84,9 @@ export default function ProductCard({ product }) {
             onClick={addToCart}
             disabled={loading}
             className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-300
-              ${
-                loading
-                  ? "bg-gray-300 text-gray-700 cursor-not-allowed"
-                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              ${loading
+                ? "bg-gray-300 text-gray-700 cursor-not-allowed"
+                : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}
             aria-pressed={loading}
           >
