@@ -1,84 +1,112 @@
-import React from 'react'
-import { useState } from 'react';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../api/user"; // adjust path if necessary
 
-const Loging = () => {
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+export default function Login() {
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((p) => ({ ...p, [name]: value }));
+    setError("");
+    setMessage("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setMessage("");
 
-    // Simple validation
     if (!formData.email || !formData.password) {
-      setError("Email and password are required.");
+      setError("Please enter your email and password.");
       return;
     }
 
-    console.log("Logging in with:", formData);
-    alert("Login successful!");
+    try {
+      setLoading(true);
+      const res = await login(formData); // expect { token, message } or similar
+      // store token under authToken to match other components
+      if (res?.token) localStorage.setItem("authToken", res.token);
+      setMessage(res?.message || "Logged in successfully");
+      // small delay so user sees message (optional)
+      setTimeout(() => navigate("/"), 600);
+    } catch (err) {
+      console.error(err?.response?.data || err.message || err);
+      setError(err?.response?.data?.message || "Login failed. Check credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="LoginPage">
-      
-        <h2 className="Login_title">Login</h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-extrabold text-gray-900 text-center">Welcome back</h2>
+        <p className="text-sm text-gray-500 mt-2 text-center">Sign in to continue to your account</p>
 
-        {error && <p className="Login_error">{error}</p>}
+        {error && (
+          <div role="alert" aria-live="assertive" className="mt-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+        {message && (
+          <div role="status" aria-live="polite" className="mt-4 text-sm text-green-600">
+            {message}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="Email">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
             <input
-              type="email"
+              id="email"
               name="email"
+              type="email"
               value={formData.email}
               onChange={handleChange}
-              className="inpute_Box"
-              placeholder="Enter your email"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              placeholder="you@example.com"
+              required
             />
           </div>
 
           <div>
-            <label className="Password">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <input
-              type="password"
+              id="password"
               name="password"
+              type="password"
               value={formData.password}
               onChange={handleChange}
-              className="inpute_Box"
-              placeholder="Enter your password"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              placeholder="••••••••"
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="button"
+            disabled={loading}
+            className={`w-full mt-2 inline-flex justify-center items-center px-4 py-2 rounded-lg text-white font-medium transition ${
+              loading ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
-            Login
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <p className="Register_link">
+        <div className="mt-6 text-center text-sm text-gray-600">
           Don’t have an account?{" "}
-          <a href="/register" className="Register_link_1">
-            Register
-          </a>
-        </p>
+          <Link to="/register" className="text-indigo-600 hover:underline">
+            Create account
+          </Link>
+        </div>
       </div>
- 
+    </div>
   );
-  
 }
-
-export default Loging
