@@ -89,7 +89,7 @@ export default function CartPage() {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
         await axios.put(
-          `http://localhost:3008/cart/increase/${encodeURIComponent(itemtitle)}`,
+          `${api}/increase/${encodeURIComponent(itemtitle)}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -103,7 +103,7 @@ export default function CartPage() {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
         await axios.put(
-          `http://localhost:3008/cart/decrease/${encodeURIComponent(itemtitle)}`,
+          `${api}/${encodeURIComponent(itemtitle)}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -116,7 +116,7 @@ export default function CartPage() {
       async () => {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
-        await axios.delete("http://localhost:3008/cart/clear", {
+        await axios.delete(`${api}/cart/clear`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       },
@@ -139,9 +139,9 @@ export default function CartPage() {
 
       const user = JSON.parse(localStorage.getItem("user"));
       const amount = Math.round(total);
-
+api_pay = "https://ecommerce-zv1v.onrender.com/transaction/pay"
       const res = await axios.post(
-        "http://localhost:3008/transaction/pay",
+        `${api_pay}`,
         { amount, email: user.email },
         { headers: { Authorization: `Bearer ${token}` } }
       );

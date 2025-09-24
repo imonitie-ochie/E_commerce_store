@@ -6,6 +6,8 @@ import NavBar from "../compunent/Nav";
 import axios from "axios";
 
 export default function SingleProductFullScreen() {
+
+  const api = "https://ecommerce-zv1v.onrender.com/cart"
   const { products = [], loading, error } = useContext(ProductContext);
   const { id } = useParams();
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ export default function SingleProductFullScreen() {
       };
 
       // direct axios POST to your endpoint
-      const res = await axios.post("http://localhost:3008/cart/add", payload, {
+      const res = await axios.post(`${api}/add`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
