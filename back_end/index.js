@@ -21,9 +21,9 @@ connectDB()
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "http://e-commerce-store-576s.vercel.app"
+    "https://e-commerce-store-576s.vercel.app"  // ✅ add https
   ],
-  methods: ["GET", "POST", "DELETE","PUT"],
+  methods: ["GET", "POST", "DELETE", "PUT"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
