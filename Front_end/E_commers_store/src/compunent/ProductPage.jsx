@@ -9,6 +9,7 @@ export default function SingleProductFullScreen() {
   const { products = [], loading, error } = useContext(ProductContext);
   const { id } = useParams();
   const navigate = useNavigate();
+  
 
   // find product by robust id matching
   const product = useMemo(

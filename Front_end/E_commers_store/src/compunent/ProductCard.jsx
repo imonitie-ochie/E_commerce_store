@@ -15,10 +15,12 @@ export default function ProductCard({ product }) {
       return;
     }
 
+    api ="https://ecommerce-zv1v.onrender.com"
+    // api ="http://localhost:3008/cart"
     setLoading(true);
     try {
       await axios.post(
-        "http://localhost:3008/cart/add",
+        `${api}/add`,
         { product },
         { headers: { Authorization: `Bearer ${token}` } }
       );
