@@ -8,15 +8,15 @@ export default function ProductCard({ product }) {
   const [loading, setLoading] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
 
+  const api = "https://e-commerce-store-576s.vercel.app/cart"
+  // api ="http://localhost:3008/cart"
+
   const addToCart = async () => {
     const token = localStorage.getItem("authToken");
     if (!token) {
       console.error("User not authenticated");
       return;
     }
-
-    const api = "https://e-commerce-store-576s.vercel.app/cart"
-    // api ="http://localhost:3008/cart"
     setLoading(true);
     try {
       await axios.post(
@@ -24,7 +24,7 @@ export default function ProductCard({ product }) {
         { product },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      //question every thing 
+      
       setToastVisible(true);
       window.setTimeout(() => setToastVisible(false), 2500);
     } catch (err) {
