@@ -5,6 +5,7 @@ const connectDB = require("./db_connection/mogo_db")
 const UserRoute = require("./Routing/User_routing")
 const CartRoute = require("./Routing/Cart_routing")
 const PaymentRoute = require("./Routing/Payment_routing")
+const WishlistRoutes = require("./Controler/WhisListControler")
 const cors = require("cors");
 
 
@@ -36,6 +37,7 @@ app.get("/", (req, res) => {
 app.use("/user", UserRoute)
 app.use("/cart", CartRoute)
 app.use("/transaction", PaymentRoute)
+app.use("/Wishlist",WishlistRoutes)
 
 app.get("/api/env", (req, res) => {
   res.json({
