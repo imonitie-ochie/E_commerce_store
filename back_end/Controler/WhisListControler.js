@@ -1,4 +1,3 @@
-// controllers/wishlistController.js
 const Wishlist = require('../database_schema/Whislist_shema')
 const mongoose = require('mongoose');
 
