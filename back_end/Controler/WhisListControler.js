@@ -1,41 +1,93 @@
-const Wishlist = require('../database_schema/Whislist_shema')
-const mongoose = require('mongoose');
+const Wishlist = require("../database_schema/Whislist_shema"); // keep your schema path
+const mongoose = require("mongoose");
 
-exports.getWishlist = async (req, res) => {
-  try {
-    const wl = await Wishlist.findOne({ user: req.user._id }).populate('items.productId').lean();
-    return res.json(wl?.items ?? []);
-  } catch (err) {
-    return res.status(500).json({ message: 'Failed to fetch wishlist', error: err.message });
-  }
-};
-
+// Add a product to wishlist
 exports.addToWishlist = async (req, res) => {
-  try {
-    const { productId } = req.body;
-    if (!mongoose.Types.ObjectId.isValid(productId)) return res.status(400).json({ message: 'Invalid productId' });
+  const userId = req.user.id;
+  const { product } = req.body;
 
-    const wl = await Wishlist.findOneAndUpdate(
-      { user: req.user._id },
-      { $addToSet: { items: { productId } } },
-      { upsert: true, new: true }
+  if (!product || !product.id) {
+    return res.status(400).json({ message: "Product information is required" });
+  }
+
+  try {
+    let wl = await Wishlist.findOne({ user: userId });
+    if (!wl) wl = new Wishlist({ user: userId, items: [] });
+
+    const existingIndex = wl.items.findIndex(
+      (item) => item.product.title === product.title
     );
 
-    return res.status(201).json(wl.items);
-  } catch (err) {
-    return res.status(500).json({ message: 'Failed to add to wishlist', error: err.message });
+    if (existingIndex > -1) {
+      // already in wishlist — return the wishlist unchanged
+      return res.status(200).json({ message: "Product already in wishlist", wishlist: wl });
+    } else {
+      wl.items.push({ product });
+    }
+
+    await wl.save();
+    return res.status(201).json({ message: "Product added to wishlist", wishlist: wl });
+  } catch (error) {
+    console.error("Error adding to wishlist:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-exports.removeFromWishlist = async (req, res) => {
+// Get the wishlist for a user
+exports.getWishlist = async (req, res) => {
+  const userId = req.user.id;
   try {
-    const { productId } = req.params;
-    await Wishlist.findOneAndUpdate(
-      { user: req.user._id },
-      { $pull: { items: { productId } } }
-    );
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ message: 'Failed to remove', error: err.message });
+    const wl = await Wishlist.findOne({ user: userId }).lean();
+    if (!wl) {
+      return res.status(200).json({ message: "Wishlist does not exist", items: [] });
+    }
+
+    // return items as-is (each item contains product)
+    res.status(200).json({
+      message: "Wishlist fetched successfully",
+      items: wl.items || []
+    });
+  } catch (error) {
+    console.error("Error fetching wishlist:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Delete a specific item from wishlist by product title
+exports.deleteItem = async (req, res) => {
+  const userId = req.user.id;
+  const { producttitle } = req.params;
+
+  try {
+    const wl = await Wishlist.findOne({ user: userId });
+    if (!wl) return res.status(404).json({ message: "Wishlist not found" });
+
+    const itemIndex = wl.items.findIndex(item => item.product.title === producttitle);
+    if (itemIndex > -1) {
+      wl.items.splice(itemIndex, 1);
+      await wl.save();
+      return res.status(200).json({ message: "Item removed from wishlist", wishlist: wl });
+    } else {
+      return res.status(404).json({ message: "Item not found in wishlist" });
+    }
+  } catch (error) {
+    console.error("Error deleting item from wishlist:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Clear all items from wishlist
+exports.clearWishlist = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const wl = await Wishlist.findOne({ user: userId });
+    if (!wl) return res.status(404).json({ message: "Wishlist not found" });
+
+    wl.items = [];
+    await wl.save();
+    return res.status(200).json({ message: "Wishlist cleared successfully", wishlist: wl });
+  } catch (error) {
+    console.error("Error clearing wishlist:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

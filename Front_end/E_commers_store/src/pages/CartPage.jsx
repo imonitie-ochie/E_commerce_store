@@ -1,53 +1,81 @@
-// src/pages/CartPage.jsx
-import React, { useEffect, useState } from "react";
-import NavBar from "../compunent/Nav";
-import Footer from "../compunent/Footer";
-import axios from "axios";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Loading from "../components/Loading";
 
-export default function CartPage() {
+const API_BASE = "https://ecommerce-zv1v.onrender.com/cart";
+const API_PAY = "https://ecommerce-zv1v.onrender.com/transaction/pay";
+
+function QtyControl({ value = 1, onChange }) {
+  // local input to avoid immediate re-render storms
+  const [v, setV] = useState(String(value));
+  React.useEffect(() => setV(String(value)), [value]);
+
+  const apply = (next) => {
+    const n = Number(next) || 0;
+    if (n < 1) return;
+    setV(String(n));
+    onChange(n);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => apply(Math.max(1, Number(v) - 1))}
+        className="w-8 h-8 flex items-center justify-center rounded border"
+        aria-label="decrease quantity"
+      >
+        −
+      </button>
+
+      <input
+        value={v}
+        onChange={(e) => setV(e.target.value.replace(/\D/g, ""))}
+        onBlur={() => apply(v)}
+        className="w-14 text-center p-1 border rounded"
+        aria-label="quantity"
+      />
+
+      <button
+        onClick={() => apply(Number(v) + 1)}
+        className="w-8 h-8 flex items-center justify-center rounded border"
+        aria-label="increase quantity"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+export default function Cart() {
   const [cart, setCart] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true); // page loading
-  const [showModal, setShowModal] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null); // id/title for specific action
-  const [paystack, setPaystack] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [paystackUrl, setPaystackUrl] = useState("");
+  const nav = useNavigate();
 
- const api = "https://ecommerce-zv1v.onrender.com/cart";
-
+  // fetch cart from server
   const fetchCart = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
         setCart([]);
-        setTotal(0);
         setLoading(false);
-        return console.warn("No token found.");
+        return;
       }
 
-      
-
-      const res = await axios.get(`${api}/view`, {
+      const res = await axios.get(`${API_BASE}/view`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const items = res.data?.items ?? [];
       setCart(items);
-      // prefer server total if provided, else compute locally
-      const serverTotal = res.data?.cartTotal;
-      if (typeof serverTotal === "number") setTotal(serverTotal);
-      else {
-        const computed = items.reduce(
-          (s, it) => s + (it.product?.price ?? 0) * (it.quantity ?? 0),
-          0
-        );
-        setTotal(computed);
-      }
-    } catch (error) {
-      console.error("Error fetching cart:", error);
+    } catch (err) {
+      console.error("Failed to fetch cart", err?.response ?? err);
+      setError("Failed to load cart.");
     } finally {
       setLoading(false);
     }
@@ -57,58 +85,90 @@ export default function CartPage() {
     fetchCart();
   }, []);
 
-  // helper to call API and refetch, with per-action loading flag
   const withAction = async (actionFn, actionId) => {
     try {
       setActionLoading(actionId);
       await actionFn();
       await fetchCart();
     } catch (err) {
-      console.error(err);
+      console.error(err?.response ?? err);
+      setError(err?.response?.data?.message || err.message || "Action failed");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const removeItem = (itemtitle) =>
+  // helpers matching the API routes in your CartPage
+  const removeItem = (title) =>
     withAction(
       async () => {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
-        await axios.delete(
-          `${api}/remove/${encodeURIComponent(itemtitle)}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axios.delete(`${API_BASE}/remove/${encodeURIComponent(title)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       },
-      `remove:${itemtitle}`
+      `remove:${title}`
     );
 
-  const increase = (itemtitle) =>
+  const increase = (title) =>
     withAction(
       async () => {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
         await axios.put(
-          `${api}/increase/${encodeURIComponent(itemtitle)}`,
+          `${API_BASE}/increase/${encodeURIComponent(title)}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
       },
-      `increase:${itemtitle}`
+      `increase:${title}`
     );
 
-  const decrease = (itemtitle) =>
+  const decrease = (title) =>
     withAction(
       async () => {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
         await axios.put(
-          `${api}/${encodeURIComponent(itemtitle)}`,
+          `${API_BASE}/${encodeURIComponent(title)}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
       },
-      `decrease:${itemtitle}`
+      `decrease:${title}`
+    );
+
+  // attempt to set quantity. backend may implement a "set" endpoint — try it first, else fall back to repeated inc/dec
+  const setQuantity = (title, newQty) =>
+    withAction(
+      async () => {
+        const token = localStorage.getItem("authToken");
+        if (!token) throw new Error("No token");
+
+        try {
+          // try a direct update endpoint (some backends provide this)
+          await axios.put(
+            `${API_BASE}/update/${encodeURIComponent(title)}`,
+            { qty: newQty },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch (err) {
+          // fallback: compute current qty and call increase/decrease repeatedly
+          const current = (cart.find((it) => (it.product?.title ?? it.title) === title)?.quantity) || 0;
+          const diff = newQty - current;
+          if (diff > 0) {
+            for (let i = 0; i < diff; i++) {
+              await axios.put(`${API_BASE}/increase/${encodeURIComponent(title)}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            }
+          } else if (diff < 0) {
+            for (let i = 0; i < Math.abs(diff); i++) {
+              await axios.put(`${API_BASE}/${encodeURIComponent(title)}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            }
+          }
+        }
+      },
+      `set:${title}`
     );
 
   const clearCart = () =>
@@ -116,256 +176,154 @@ export default function CartPage() {
       async () => {
         const token = localStorage.getItem("authToken");
         if (!token) throw new Error("No token");
-        await axios.delete(`${api}/cart/clear`, {
+        await axios.delete(`${API_BASE}/cart/clear`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       },
       "clear"
     );
 
-  const handleCheckout = () => {
-    // go to checkout page — replace logic if you need to call an API first
-    setShowModal(true);
-  };
+  const subtotal = useMemo(() => {
+    return cart.reduce((s, it) => {
+      const price = Number(it.product?.price ?? it.price ?? 0);
+      const qty = Number(it.quantity ?? it.qty ?? 0);
+      return s + price * qty;
+    }, 0);
+  }, [cart]);
 
-  // small helper for formatting
-  const formatPrice = (v) =>
-    typeof v === "number" ? v.toFixed(2) : Number(v ?? 0).toFixed(2);
+  const shipping = subtotal > 0 ? 3.5 : 0;
+  const total = subtotal + shipping;
 
-  const confirmPayment = async () => {
+  const handleCheckout = async () => {
+    setError("");
+    if (!cart.length) {
+      setError("Your cart is empty.");
+      return;
+    }
+
+    setCheckoutLoading(true);
     try {
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("No token");
-
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
       const amount = Math.round(total);
-api_pay = "https://ecommerce-zv1v.onrender.com/transaction/pay"
+
       const res = await axios.post(
-        `${api_pay}`,
-        { amount, email: user.email },
+        API_PAY,
+        { amount, email: user?.email },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const checkoutUrl = res.data.data.data.authorization_url;
-      setPaystack(checkoutUrl);
-      setPaymentSuccess(true);
-      console.log("Payment initialized:", checkoutUrl);
+      const checkoutUrl = res.data?.data?.data?.authorization_url || res.data?.data?.authorization_url || res.data?.authorization_url;
+      if (checkoutUrl) {
+        setPaystackUrl(checkoutUrl);
+        // open in new tab
+        window.open(checkoutUrl, "_blank");
+      } else {
+        setError("Failed to initialize payment.");
+        console.warn("Payment response", res.data);
+      }
     } catch (err) {
-      console.error("Payment error:", err.response?.data || err.message);
+      console.error("Payment error", err?.response ?? err);
+      setError(err?.response?.data?.message || err.message || "Payment failed");
     } finally {
-      setShowModal(false);
+      setCheckoutLoading(false);
     }
   };
 
-
-
-
-
+  if (loading) return <Loading />;
 
   return (
-    <>
-      <NavBar />
+    <div className="max-w-6xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-6">Your Cart</h1>
 
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-6 text-center">Your Cart</h1>
-
-          {loading ? (
-            <div className="min-h-[40vh] flex items-center justify-center">
-              <div className="text-gray-500">Loading cart...</div>
-            </div>
-          ) : cart.length === 0 ? (
-            <div className="min-h-[40vh] flex flex-col items-center justify-center gap-4">
-              <p className="text-gray-600 text-lg">Your cart is empty</p>
-              <button
-                onClick={() => navigate("/shop")}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700"
-              >
-                Browse products
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Items list */}
-              <section className="lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-lg font-medium">Items ({cart.length})</div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-lg font-semibold">Total: ₦{formatPrice(total)}</div>
-                    <button
-                      onClick={() => clearCart()}
-                      disabled={actionLoading === "clear"}
-                      className="ml-2 inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-60"
-                    >
-                      {actionLoading === "clear" ? "Clearing..." : "Clear cart"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {cart.map((item, idx) => {
-                    const title = item.product?.title ?? `item-${idx}`;
-                    const price = Number(item.product?.price ?? 0);
-                    const subtotal = price * (item.quantity ?? 0);
-                    const actionIdInc = `increase:${title}`;
-                    const actionIdDec = `decrease:${title}`;
-                    const actionIdRemove = `remove:${title}`;
-
-                    return (
-                      <div
-                        key={item._id ?? idx}
-                        className="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-white rounded-2xl p-4 shadow"
-                      >
-                        <img
-                          src={item.product?.image}
-                          alt={title}
-                          className="w-28 h-28 object-contain rounded-md bg-gray-50 p-2"
-                        />
-
-                        <div className="flex-1 w-full">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="text-base font-semibold text-gray-800">{title}</h3>
-                              <p className="text-sm text-gray-500 mt-1">{item.product?.category}</p>
-                            </div>
-
-                            <div className="text-right">
-                              <div className="text-sm text-gray-500">Unit</div>
-                              <div className="text-lg font-semibold text-indigo-600">₦{formatPrice(price)}</div>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 flex items-center justify-between gap-4">
-                            {/* quantity controls */}
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => decrease(title)}
-                                disabled={actionLoading === actionIdDec || actionLoading === actionIdRemove}
-                                className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-60"
-                                aria-label={`Decrease quantity for ${title}`}
-                              >
-                                −
-                              </button>
-
-                              <div className="px-3 text-sm font-medium">{item.quantity}</div>
-
-                              <button
-                                onClick={() => increase(title)}
-                                disabled={actionLoading === actionIdInc || actionLoading === actionIdRemove}
-                                className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-60"
-                                aria-label={`Increase quantity for ${title}`}
-                              >
-                                +
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="text-sm text-gray-600">Subtotal</div>
-                              <div className="text-lg font-semibold">₦{formatPrice(subtotal)}</div>
-
-                              <button
-                                onClick={() => removeItem(title)}
-                                disabled={actionLoading === actionIdRemove}
-                                className="ml-3 inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-60"
-                              >
-                                {actionLoading === actionIdRemove ? "Removing..." : "Remove"}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {/* Summary / checkout */}
-              <aside className="lg:col-span-1">
-                <div className="sticky top-6 bg-white rounded-2xl p-6 shadow">
-                  <h2 className="text-lg font-semibold text-gray-900">Order summary</h2>
-                  <div className="mt-4 text-sm text-gray-600 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span>Items</span>
-                      <span>{cart.reduce((s, it) => s + (it.quantity ?? 0), 0)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Subtotal</span>
-                      <strong>₦{formatPrice(total)}</strong>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Shipping</span>
-                      <span className="text-sm text-gray-500">Calculated at checkout</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleCheckout}
-                    className="mt-6 w-full inline-flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
-                  >
-                    Proceed to checkout
-                  </button>
-
-                  {/* ✅ Modal */}
-                  {showModal && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
-                      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                          Confirm Payment
-                        </h2>
-                        <p className="text-gray-600 mb-6">
-                          You are about to pay <strong>₦{formatPrice(total)}</strong>.
-                          Do you want to continue?
-                        </p>
-
-                        <div className="flex justify-end gap-3">
-                          <button
-                            onClick={() => setShowModal(false)}
-                            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={confirmPayment}
-                            className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-
-                          >
-                            Pay
-                          </button>
-
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {paymentSuccess && paystack && (
-                    <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-lg">
-                      ✅ Payment initialized successfully!
-                      <div className="mt-2">
-                        <a
-                          href={paystack}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                        >
-                          Proceed to Paystack
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => navigate("/products")}
-                    className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg text-sm"
-                  >
-                    Continue shopping
-                  </button>
-                </div>
-              </aside>
-            </div>
-          )}
+      {cart.length === 0 ? (
+        <div className="bg-white p-8 rounded shadow text-center">
+          <p className="text-gray-700 mb-4">Your cart is empty.</p>
+          <button onClick={() => nav("/")} className="px-4 py-2 bg-black text-white rounded">Continue shopping</button>
         </div>
-      </main>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* left: items */}
+          <div className="lg:col-span-2 space-y-4">
+            {cart.map((item, idx) => {
+              const product = item.product ?? item;
+              const title = product?.title ?? product?.name ?? `item-${idx}`;
+              const id = item._id ?? idx;
+              const price = Number(product?.price ?? 0);
+              const qty = Number(item.quantity ?? item.qty ?? 1);
 
-      <Footer />
-    </>
+              return (
+                <div key={id} className="bg-white p-4 rounded shadow flex gap-4 items-center">
+                  <img src={product?.image} alt={title} className="w-28 h-28 object-cover rounded" />
+                  <div className="flex-1">
+                    <div className="font-medium">{title}</div>
+                    <div className="text-sm text-gray-500 mt-1">₦{price.toFixed(2)} each</div>
+                    <div className="mt-3 flex items-center gap-6">
+                      <QtyControl
+                        value={qty}
+                        onChange={(newQty) => setQuantity(title, newQty)}
+                      />
+                      <button onClick={() => removeItem(title)} className="text-sm text-red-500">Remove</button>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-semibold">₦{(price * qty).toFixed(2)}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* right: summary */}
+          <aside className="bg-white p-4 rounded shadow">
+            <div className="text-sm text-gray-500">Subtotal</div>
+            <div className="text-2xl font-bold mb-4">₦{subtotal.toFixed(2)}</div>
+
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <div>Shipping</div>
+              <div>₦{shipping.toFixed(2)}</div>
+            </div>
+
+            <div className="flex justify-between text-lg font-semibold mb-4">
+              <div>Total</div>
+              <div>₦{total.toFixed(2)}</div>
+            </div>
+
+            {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
+
+            <button
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              className="w-full py-3 bg-green-600 text-white rounded mb-3 disabled:opacity-60"
+            >
+              {checkoutLoading ? "Initializing payment..." : "Proceed to Checkout"}
+            </button>
+
+            {paystackUrl && (
+              <a
+                href={paystackUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="w-full inline-block text-center py-2 border rounded bg-indigo-600 text-white"
+              >
+                Continue to Paystack
+              </a>
+            )}
+
+            <button onClick={() => nav("/")} className="w-full py-2 border rounded mt-2">Continue shopping</button>
+
+            <button
+              onClick={() => clearCart()}
+              disabled={actionLoading === "clear"}
+              className="w-full py-2 mt-3 bg-red-600 text-white rounded disabled:opacity-60"
+            >
+              {actionLoading === "clear" ? "Clearing..." : "Clear cart"}
+            </button>
+          </aside>
+        </div>
+      )}
+    </div>
   );
 }
