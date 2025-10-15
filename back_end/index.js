@@ -6,6 +6,7 @@ const UserRoute = require("./Routing/User_routing")
 const CartRoute = require("./Routing/Cart_routing")
 const PaymentRoute = require("./Routing/Payment_routing")
 const wishlistRoutes = require('./Routing/WhishList_Rout');
+const commentRoutes = require("./Routing/commentsRoutes")
 const cors = require("cors");
 
 
@@ -38,6 +39,7 @@ app.use("/user", UserRoute)
 app.use("/cart", CartRoute)
 app.use("/transaction", PaymentRoute)
 app.use('/wishlist', wishlistRoutes);  
+app.use("/comments", commentRoutes)
 
 app.get("/api/env", (req, res) => {
   res.json({
