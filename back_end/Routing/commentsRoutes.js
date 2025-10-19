@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const {addComment ,GetCommentsByProduct} =  require('../Controler/commentController');
+const { addComment, getCommentsByProduct } = require("../Controler/commentController");
+const {auth} = require("../middleware/auth")
 
 
-
-// Add a new comment
 router.post("/add", addComment);
 
-// Get all comments for a product by product name
-router.get("/:productName", GetCommentsByProduct);
+
+router.get("/:productID", getCommentsByProduct);
 
 module.exports = router;
