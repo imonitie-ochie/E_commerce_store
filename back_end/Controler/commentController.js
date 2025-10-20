@@ -5,44 +5,35 @@ const Comment = require("../database_schema/commentSchema");
 
 exports.addComment = async (req, res) => {
   try {
-    const { content, author: authorFromBody, parentPostid } = req.body;
+    const { content, author, parentPostid } = req.body;
 
-    
-    if (!content || !parentPostid) {
-      return res.status(400).json({ message: "content and parentPostid are required" });
+    if (!content || !author || !parentPostid) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-
-    const authorFromReq = req.user && req.user._id ? req.user._id : null;
-    const author = authorFromReq ?? authorFromBody ?? null;
-
-    
-    const authorForSave =
-      author && mongoose.Types.ObjectId.isValid(author) ? mongoose.Types.ObjectId(author) : author;
-
-   
-    const newComment = new Comment({
+    const comment = new Comment({
       content,
-      author: authorForSave,
+      author,
       parentPostid,
     });
 
-    await newComment.save();
+    await comment.save();
 
-
-    const populated = await Comment.findById(newComment._id).populate("author", "name");
-
-    return res.status(201).json({ message: "Comment added successfully", comment: populated });
-  } catch (error) {
-    console.error("Error adding comment:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(201).json({
+      message: "Comment added successfully",
+      comment,
+    });
+  } catch (err) {
+    console.error("Error adding comment:", err);
+    res.status(500).json({
+      message: "Error adding comment",
+      error: err.message,
+    });
   }
 };
 
 
-// make sure these are imported at top of file:
-// const mongoose = require("mongoose");
-// const Comment = require("../models/Comment");
+
 
 exports.getCommentsByProduct = async (req, res) => {
   try {
