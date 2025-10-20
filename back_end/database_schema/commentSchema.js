@@ -5,11 +5,11 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "users",
-    required: true,
-  },
+  author:  {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
   parentPostid: {
     type: Number,
     required: true,
