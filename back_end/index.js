@@ -21,11 +21,7 @@ const APP_NAME = process.env.APP_NAME || "ExpressApp";
 app.use(express.json());
 connectDB()
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "e-commerce-store-front-iota.vercel.app",
-    "https://e-commerce-store-576s.vercel.app"  
-  ],
+  origin: "*",
   methods: ["GET", "POST", "DELETE", "PUT"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
