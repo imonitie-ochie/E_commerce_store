@@ -23,6 +23,7 @@ connectDB()
 app.use(cors({
   origin: [
     "http://localhost:5173",
+    "https://e-commerce-store-front-iota.vercel.app/",
     "https://e-commerce-store-576s.vercel.app"  
   ],
   methods: ["GET", "POST", "DELETE", "PUT"],
